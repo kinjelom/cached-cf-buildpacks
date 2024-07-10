@@ -1,0 +1,6 @@
+.local/
+.logs/
+.tmp/
+.temp/
+.build/
+.data/
