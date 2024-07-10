@@ -25,3 +25,6 @@ docker run -v ./:/build -it ruby:3.3 /bin/bash -c '
   && find -type f -exec sed -i "s/buildpacks.cloudfoundry.org/pivotal-buildpacks.s3.amazonaws.com/g" {} + \                                                             
   && bundle exec rake clean package OFFLINE=true PINNED=true'
 ```
+
+> @schmidtsv
+> remember you can not build offline java buildpacks but the latest version and only that around release time since the dependencies are not versioned and it always pulls the latest
