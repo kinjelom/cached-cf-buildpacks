@@ -66,3 +66,27 @@ docker run -v ./:/build -it ruby:3.3 /bin/bash -c '
 > @schmidtsv
 > remember you can not build offline java buildpacks but the latest version and only that around release time since the dependencies are not versioned and it always pulls the latest
 
+## Check Buildpack Dependencies Script
+
+```bash
+#!/bin/bash -u
+
+manifest="my-buildpack/manifest.yml"
+dependencies=$(yq eval '.dependencies[] | .uri + " " + .sha256' $manifest)
+echo "$dependencies" | while read -r uri sha256; do
+    if [ -n "$uri" ] && [ -n "$sha256" ]; then
+        temp_file=$(mktemp)
+        if curl -sfL "$uri" -o "$temp_file"; then
+            computed_sha256=$(sha256sum "$temp_file" | awk '{print $1}')
+            if [ "$computed_sha256" == "$sha256" ]; then
+                echo "OK dep: $uri, hash: $sha256"
+            else
+                echo "ERR dep: $uri, Computed hash: $computed_sha256 != expected: $sha256"
+            fi
+        else
+            echo "ERR dep $uri doesn't exist"
+        fi
+        rm -f "$temp_file"
+    fi
+done
+```
