@@ -16,6 +16,43 @@ Additionally, you can prepare your own cached buildpacks for future use with the
 ```
 By doing this, you can ensure that all necessary dependencies are included in your buildpacks, making the application staging process more reliable and efficient.
 
+## Build Offline Buildpacks Script
+
+```bash
+#!/bin/bash -eu
+
+mkdir -p ./.build
+
+package_offline_buildpack() {
+    local buildpack=$1
+    local version=$2
+    local stack=$3
+    local out_file="../.build/${buildpack}_offline-${stack}-v${version}.zip"
+    ./scripts/package.sh --stack "$stack" --cached --version "$version" --output "$out_file"
+}
+
+for DIR in *-buildpack; do
+    if [ -d "$DIR" ]; then
+        pushd "$DIR" > /dev/null
+        echo "====== $DIR"
+        git pull
+        if [ -f "VERSION" ]; then
+            VERSION=$(cat "VERSION")
+            BUILDPACK="${DIR//-/_}"
+            echo "Processing buildpack: $BUILDPACK, version: $VERSION"
+            package_offline_buildpack "$BUILDPACK" "$VERSION" "cflinuxfs3".
+            package_offline_buildpack "$BUILDPACK" "$VERSION" "cflinuxfs4"
+            echo "done."
+        else
+            echo "VERSION file not found in $DIR"
+        fi
+        popd > /dev/null
+    fi
+done
+```
+
+
+---
 
 > @rkoster
 > With the above information was able to build an offline java buildpack by running the following snippet from the root of the repo:
@@ -28,3 +65,4 @@ docker run -v ./:/build -it ruby:3.3 /bin/bash -c '
 
 > @schmidtsv
 > remember you can not build offline java buildpacks but the latest version and only that around release time since the dependencies are not versioned and it always pulls the latest
+
